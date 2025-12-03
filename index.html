@@ -1,1 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argentina Energía 2050 - Simulador Educativo</title>
+    <style>
+        /* Estilos básicos para la aplicación */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #004d99;
+            text-align: center;
+        }
+        h2 {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            color: #007bff;
+        }
+        .matrix-display, .results, .simulator-control {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .simulator-control label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .simulator-control input[type="range"] {
+            width: 80%;
+            margin: 5px 0 15px 0;
+        }
+        .result-item {
+            font-size: 1.1em;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #e6f7ff;
+            border-left: 5px solid #007bff;
+        }
+        /* Estilos para la Matriz Actual (simulada) */
+        .matrix-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .matrix-item span:first-child {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <h1>🇦🇷 Argentina Energía 2050 ⚡</h1>
+    <p style="text-align: center;">Simulador de Transición de la Matriz Energética para Estudiantes de Secundaria</p>
+
+    <h2>📊 Matriz Energética Argentina Actual (Ejemplo)</h2>
+    <div class="matrix-display">
+        <p><strong>Total de Energía Generada:</strong> 150.000 GWh/año</p>
+        <div class="matrix-item"><span>Gas Natural</span><span>55%</span></div>
+        <div class="matrix-item"><span>Petróleo/Diesel</span><span>15%</span></div>
+        <div class="matrix-item"><span>Hidráulica</span><span>18%</span></div>
+        <div class="matrix-item"><span>Nuclear</span><span>5%</span></div>
+        <div class="matrix-item"><span>Eólica y Solar (Renovables)</span><span>7%</span></div>
+        <p style="margin-top: 15px;">**Emisiones $\text{CO}_2$ asociadas:** 60 Megatoneladas/año (Mt/año)</p>
+        </div>
+
+    <h2>⚙️ Proyección 2050: Modifica la Matriz</h2>
+    <div class="simulator-control">
+        <p>Ajusta los porcentajes de las fuentes de energía para el año 2050. ¡El objetivo es **reducir las emisiones**!</p>
+
+        <label for="gas">Gas Natural (%): <span id="gas-val">55</span>%</label>
+        <input type="range" id="gas" min="0" max="60" value="55" oninput="updateMatrix()">
+
+        <label for="eolica">Energía Eólica (%): <span id="eolica-val">5</span>%</label>
+        <input type="range" id="eolica" min="0" max="50" value="5" oninput="updateMatrix()">
+
+        <label for="solar">Energía Solar (%): <span id="solar-val">2</span>%</label>
+        <input type="range" id="solar" min="0" max="40" value="2" oninput="updateMatrix()">
+
+        <label for="hidro">Hidráulica y Nuclear (Fija): 23%</label>
+        <p style="margin-top: 15px;">**Suma Actual de Porcentajes (Renovables + Gas):** <span id="current-sum">62</span>%</p>
+        <small>El resto del porcentaje (hasta 100%) se completaría con otras fuentes como Petróleo, Biomasa, o mejoras en eficiencia.</small>
+    </div>
+
+    <h2>📈 Impactos de la Nueva Matriz</h2>
+    <div class="results">
+        <div class="result-item">🌍 **Emisiones $\text{CO}_2$ Proyectadas:** <span id="co2-impact">55</span> Mt/año</div>
+        <div class="result-item">💰 **Costo de Inversión (Infraestructura):** <span id="cost-impact">5.000</span> Millones USD</div>
+        <div class="result-item">🌱 **Porcentaje de Energía Renovable:** <span id="renovable-impact">7</span>%</div>
+    </div>
+
+    <h2>📚 Módulo Educativo: Eólica en Argentina</h2>
+    <div class="educational-module">
+        <p>La **Energía Eólica** aprovecha el viento, que es abundante en la **Patagonia** argentina. El principal desafío es la **intermitencia** (no siempre hay viento) y la necesidad de sistemas de transmisión de alta capacidad para llevar la energía desde el sur a los centros de consumo. 
+
+[Image of a wind farm in Patagonia]
+</p>
+        <p><strong>Término Clave:</strong> *Factor de Capacidad:* Es el rendimiento real de una planta respecto a su capacidad máxima (la eólica suele tener un factor más bajo que una central a gas).</p>
+    </div>
+</div>
+
+<script>
+    // --- Lógica JavaScript para el Simulador ---
+    function updateMatrix() {
+        // 1. Obtener valores de los deslizadores
+        const gasVal = parseInt(document.getElementById('gas').value);
+        const eolicaVal = parseInt(document.getElementById('eolica').value);
+        const solarVal = parseInt(document.getElementById('solar').value);
+
+        // 2. Actualizar texto de los deslizadores
+        document.getElementById('gas-val').textContent = gasVal;
+        document.getElementById('eolica-val').textContent = eolicaVal;
+        document.getElementById('solar-val').textContent = solarVal;
+
+        // 3. Calcular la suma total (Gas + Eólica + Solar + Fijas)
+        // Usamos 23% fijo para Hidráulica y Nuclear para simplificar el ejemplo.
+        const fixed = 23; 
+        const currentSum = gasVal + eolicaVal + solarVal + fixed;
+        document.getElementById('current-sum').textContent = currentSum;
+
+        // 4. Calcular el Impacto (Fórmulas Educativas Simplificadas)
+        
+        // Emisiones CO2: Más renovables = Menos CO2 (y viceversa para Gas)
+        // Ejemplo simplificado: CO2 = 60 - (Eólica + Solar) * 0.8
+        const co2Impact = Math.max(30, 60 - (eolicaVal + solarVal - 7) * 0.8).toFixed(1); // Mínimo de 30 Mt/año
+        document.getElementById('co2-impact').textContent = co2Impact;
+
+        // Costo de Inversión: Más renovables = Mayor costo de infraestructura inicial
+        // Ejemplo simplificado: Costo = 5000 + (Eólica + Solar - 7) * 250
+        const costImpact = (5000 + (eolicaVal + solarVal - 7) * 250).toFixed(0);
+        document.getElementById('cost-impact').textContent = costImpact.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Formato con puntos
+        
+        // Porcentaje de Energía Renovable: Suma de Eólica + Solar + Hidráulica (aunque Hidráulica no se modifica)
+        const renovableImpact = eolicaVal + solarVal + 18; // 18% es la Hidráulica del ejemplo
+        document.getElementById('renovable-impact').textContent = renovableImpact;
+    }
+
+    // Inicializar el impacto al cargar
+    updateMatrix();
+</script>
+
+</body>
+</html>
