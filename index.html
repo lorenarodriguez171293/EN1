@@ -3,157 +3,983 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Argentina Energía 2050 - Simulador Educativo</title>
+    <title>Matriz Energética y Simuladores de Argentina</title>
     <style>
-        /* Estilos básicos para la aplicación */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f7f9;
-            color: #333;
+        /* Estilos de la Aplicación Base */
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f0f4f7; color: #333; }
+        header { background-color: #1a5c92; color: white; padding: 25px 0; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h1 { margin: 0; font-size: 2.2em; }
+        .container { width: 95%; max-width: 1100px; margin: 30px auto; }
+        
+        /* Estilos de Secciones y Botones */
+        .content-section { 
+            display: none; 
+            padding: 30px; 
+            border: 1px solid #cceeff; 
+            background-color: white; 
+            margin-bottom: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05); 
         }
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .content-section.active { display: block; }
+        .nav-buttons button, .back-button { 
+            background-color: #007bff; color: white; border: none; padding: 12px 20px; margin: 8px 5px; 
+            cursor: pointer; border-radius: 6px; font-size: 1em; transition: background-color 0.3s, transform 0.1s;
         }
-        h1 {
-            color: #004d99;
-            text-align: center;
+        .nav-buttons button:hover, .back-button:hover { background-color: #0056b3; transform: translateY(-1px); }
+        .back-button { background-color: #6c757d !important; margin-bottom: 20px; }
+        .map-button { background-color: #28a745 !important; }
+        .map-button:hover { background-color: #1e7e34 !important; }
+
+
+        /* Controles de Simulador */
+        .simulator-area { 
+            background-color: #e9f5ff; padding: 25px; margin-top: 20px; border: 2px dashed #007bff; 
+            border-radius: 8px; min-height: 500px; display: flex; flex-direction: column; align-items: center;
         }
-        h2 {
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 5px;
-            margin-top: 25px;
-            color: #007bff;
+        .simulator-control { 
+            margin-bottom: 20px; width: 80%; max-width: 500px; text-align: left; padding: 15px;
+            background-color: #d1e7ff; border-radius: 8px;
         }
-        .matrix-display, .results, .simulator-control {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+        .simulator-control label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .simulator-control input[type="range"] { width: 100%; }
+        .simulator-output { 
+            font-size: 1.2em; font-weight: bold; color: #1a5c92; margin-top: 15px; padding: 10px;
+            border: 1px solid #1a5c92; border-radius: 4px; background-color: #f8fbfc;
         }
-        .simulator-control label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
+
+        /* --- VISUALIZACIÓN DE MATRIZ DE DATOS (GRÁFICO DE TORTA) --- */
+        .pie-chart-container {
+            width: 100%; max-width: 350px; height: 350px; margin: 20px auto; position: relative;
         }
-        .simulator-control input[type="range"] {
-            width: 80%;
-            margin: 5px 0 15px 0;
+        #pie-chart {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(
+                #e67e22 0% 52.0%, /* Gas */
+                #34495e 52.0% 83.0%, /* Petróleo */
+                #2980b9 83.0% 87.5%, /* Hidro */
+                #27ae60 87.5% 90.0%, /* Nuclear */
+                #f1c40f 90.0% 98.0%, /* Renovables */
+                #34495e 98.0% 100% /* Otros */
+            );
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
-        .result-item {
-            font-size: 1.1em;
-            margin: 10px 0;
-            padding: 8px;
-            background-color: #e6f7ff;
-            border-left: 5px solid #007bff;
+        .chart-legend {
+            list-style: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px;
         }
-        /* Estilos para la Matriz Actual (simulada) */
-        .matrix-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
+        .legend-item {
+            margin: 5px 15px; font-size: 0.9em;
         }
-        .matrix-item span:first-child {
-            font-weight: bold;
+        .legend-color {
+            display: inline-block; width: 12px; height: 12px; margin-right: 5px; border-radius: 3px;
         }
+        /* Colores de la leyenda */
+        .gas-color { background-color: #e67e22; } .oil-color { background-color: #34495e; } 
+        .hydro-color { background-color: #2980b9; } .nuclear-color { background-color: #27ae60; } 
+        .renewable-color { background-color: #f1c40f; }
+
+        /* --- ESTILOS DE VISUALIZACIÓN DE SIMULADORES (mantenidos) --- */
+        /* 1. HIDROELÉCTRICA */
+        .hydro-viz-container {
+            width: 450px; height: 250px; background: #e0f7fa; border: 2px solid #546e7a; border-radius: 5px;
+            position: relative; margin-bottom: 20px; overflow: hidden; display: flex;
+        }
+        .reservoir-side { width: 60%; position: relative; overflow: hidden; }
+        .powerhouse-side { width: 40%; background: #cfd8dc; position: relative; }
+        
+        #dam-structure {
+            position: absolute; bottom: 0; left: 60%; width: 5px; height: 100%; background: #9e9e9e; 
+            z-index: 5;
+        }
+        #water-level {
+            position: absolute; bottom: 0; width: 100%; background: #00bcd4; transition: height 0.5s ease;
+            opacity: 0.8;
+        }
+        .text-label { position: absolute; font-size: 0.7em; color: #333; font-weight: bold; }
+        .label-embalse { top: 10px; left: 10px; color: #1565c0; }
+        .label-tailrace { bottom: 10px; right: 10px; color: #1a5c92; }
+        
+        #water-head-line {
+            position: absolute; width: 60%; height: 2px; background: red; top: 0; left: 0;
+            transition: top 0.5s ease;
+            opacity: 0.5; border-bottom: 1px dashed red;
+        }
+        #dam-crest { position: absolute; top: 50px; left: 55%; font-size: 0.7em; color: black; }
+        #water-flow-indicator {
+            position: absolute; left: 60%; bottom: 30px; width: 10px; height: 30px; 
+            background: linear-gradient(to bottom, #4fc3f7, #00bcd4);
+            transform: skewX(10deg); opacity: 0; transition: opacity 0.5s; z-index: 10;
+        }
+        
+        .turbine-svg {
+            position: absolute; bottom: 10px; left: 10px; width: 60px; height: 60px;
+            transform-origin: 50% 50%; transition: transform 0.1s linear;
+        }
+        .turbine-blade { fill: #455a64; stroke: #263238; stroke-width: 1; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 2. NUCLEAR */
+        .nuclear-viz-container {
+            width: 400px; height: 300px; background: #e8f5e9; border: 3px solid #388e3c; border-radius: 10px;
+            position: relative; display: flex; align-items: flex-end; justify-content: center; padding-top: 20px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden;
+        }
+        #reactor-vessel { width: 80%; height: 80%; background: #a5d6a7; border-radius: 10px 10px 0 0; position: relative; }
+        .rod-container { 
+            position: absolute; top: 0; width: 100%; display: flex; justify-content: space-around; 
+            padding: 0 40px; box-sizing: border-box;
+        }
+        .rod { width: 10px; background: #546e7a; border-radius: 3px; position: relative; transition: transform 0.3s ease; }
+        
+        .neutron {
+            position: absolute; width: 5px; height: 5px; background: yellow; border-radius: 50%;
+            opacity: 0; animation: none;
+        }
+        .uranium-atom {
+            position: absolute; width: 20px; height: 20px; background: #4caf50; border-radius: 50%;
+            border: 2px solid #2e7d32; text-align: center; color: white; font-size: 0.7em; line-height: 18px;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        #uranium-1 { top: 50%; left: 30%; } #uranium-2 { top: 40%; right: 20%; }
+        
+        @keyframes fission {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(3); opacity: 0.5; background: red; }
+            100% { transform: scale(1); opacity: 1; background: #4caf50; }
+        }
+        @keyframes neutronPath {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(100px, -50px); opacity: 0; }
+        }
+
+        /* 3. FOTOVOLTAICA */
+        .solar-viz-container {
+            width: 350px; height: 180px; background: #424242; border: 4px solid #fbc02d; border-radius: 5px;
+            position: relative; margin-bottom: 20px; overflow: hidden; box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+        }
+        .panel-layer { position: absolute; width: 100%; height: 30px; }
+        .layer-glass { background: rgba(255, 255, 255, 0.3); top: 0; color: white; padding: 5px; font-size: 0.7em; }
+        .layer-cell { 
+            background: #0d47a1; top: 30px; height: 120px; 
+            display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center;
+        }
+        .layer-cell::after { 
+            content: "CÉLULAS DE SILICIO"; color: white; font-size: 0.8em; opacity: 0.7; 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+        .layer-back { background: #333; bottom: 0; height: 30px; color: white; padding: 5px; font-size: 0.7em; text-align: right; }
+
+        #solar-rays {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 175px 0px, rgba(255, 255, 0, 0.4) 0%, rgba(255, 255, 0, 0) 60%);
+            opacity: 0.7; transition: opacity 0.5s ease, filter 0.5s ease;
+        }
+        .photon {
+            position: absolute; width: 3px; height: 3px; background: yellow; border-radius: 50%;
+            animation: none; opacity: 0;
+        }
+        @keyframes photonHit {
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(50px); opacity: 0; }
+        }
+
+        /* 4. EÓLICA (Estilos de base se mantienen) */
+        .eolic-viz-container {
+            width: 250px; height: 400px; position: relative; margin-bottom: 20px;
+        }
+        .turbine-base { width: 30px; height: 150px; background: #78909c; position: absolute; bottom: 0; left: 110px; border-radius: 5px; }
+        .turbine-nacelle { width: 60px; height: 40px; background: #546e7a; position: absolute; bottom: 150px; left: 95px; border-radius: 5px; }
+        .turbine-hub { width: 15px; height: 15px; background: #37474f; position: absolute; bottom: 160px; left: 118px; border-radius: 50%; z-index: 10; }
+        #turbine-blades {
+            position: absolute; bottom: 167px; left: 125px; width: 10px; height: 10px;
+            transform-origin: 0% 50%; transition: transform 0.1s linear;
+        }
+        .blade { 
+            position: absolute; width: 100px; height: 20px; background: #90a4ae; transform-origin: 0% 50%;
+            border-radius: 15px; box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        .blade:nth-child(1) { transform: rotate(0deg) translateX(-5px); }
+        .blade:nth-child(2) { transform: rotate(120deg) translateX(-5px); }
+        .blade:nth-child(3) { transform: rotate(240deg) translateX(-5px); }
+        
+        #wind-flow {
+            position: absolute; top: 150px; left: 0; width: 5px; height: 20px; background: rgba(0, 150, 136, 0.5);
+            opacity: 0; transition: all 0.5s ease;
+        }
+        @keyframes windAnimate { 0% { transform: translateX(-50px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateX(250px); opacity: 0; } }
+
+        /* 5. BIOCOMBUSTIBLES (Se mantiene) */
+        .bio-viz-container {
+            width: 400px; height: 200px; background: #f1f8e9; border: 2px solid #aed581; border-radius: 8px;
+            display: flex; justify-content: space-around; align-items: flex-end; padding: 20px; margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        .process-tank { 
+            width: 100px; height: 150px; background: #fff; border: 2px solid #8bc34a; border-radius: 5px;
+            position: relative; overflow: hidden;
+        }
+        .tank-label { text-align: center; font-size: 0.8em; font-weight: bold; margin-top: 5px; }
+        .plant-icon { font-size: 3em; line-height: 1; color: #8bc34a; text-align: center; }
+        
+        #fossil-fuel { 
+            position: absolute; bottom: 0; width: 100%; background: #3e2723; transition: height 0.5s ease;
+        }
+        #bio-fuel { 
+            position: absolute; bottom: 0; width: 100%; background: #c5e1a5; transition: height 0.5s ease;
+        }
+        .fuel-mix-tank { margin-top: 20px; }
+        .fuel-mix-tank .tank-label { color: #3e2723; }
+        .label-bio { position: absolute; top: 5px; left: 5px; font-size: 0.7em; color: white; }
+        .label-fossil { position: absolute; bottom: 5px; right: 5px; font-size: 0.7em; color: white; }
+
+        /* --- ESTILOS ESPECÍFICOS DEL MAPA --- */
+        #mapa-argentina {
+            width: 100%; max-width: 600px; height: auto; border: 1px solid #ccc; border-radius: 8px;
+            background-color: #f8f8f8;
+            margin: 20px auto;
+        }
+        .map-point {
+            cursor: pointer;
+            transition: fill 0.2s, transform 0.2s;
+        }
+        .map-point:hover {
+            transform: scale(1.5);
+        }
+        .solar-point { fill: #fbc02d; }
+        .wind-point { fill: #00bcd4; }
+        .hydro-point { fill: #2980b9; }
+        .bio-point { fill: #8bc34a; }
+
+        /* Estilo del Modal de Información */
+        .info-modal {
+            background-color: #e9f5ff; padding: 20px; border-radius: 8px; border: 2px solid #007bff;
+            margin-top: 20px; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto;
+            text-align: left;
+        }
+        .modal-title { font-size: 1.5em; color: #1a5c92; margin-bottom: 10px; border-bottom: 2px solid #007bff; padding-bottom: 5px;}
+        .modal-img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
+        .modal-data p { margin: 5px 0; font-size: 0.9em; }
+        .modal-data strong { color: #0056b3; }
+
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🇦🇷 Argentina Energía 2050 ⚡</h1>
-    <p style="text-align: center;">Simulador de Transición de la Matriz Energética para Estudiantes de Secundaria</p>
+    <header>
+        <h1>Matriz Energética y Simuladores de Argentina 🇦🇷</h1>
+    </header>
 
-    <h2>📊 Matriz Energética Argentina Actual (Ejemplo)</h2>
-    <div class="matrix-display">
-        <p><strong>Total de Energía Generada:</strong> 150.000 GWh/año</p>
-        <div class="matrix-item"><span>Gas Natural</span><span>55%</span></div>
-        <div class="matrix-item"><span>Petróleo/Diesel</span><span>15%</span></div>
-        <div class="matrix-item"><span>Hidráulica</span><span>18%</span></div>
-        <div class="matrix-item"><span>Nuclear</span><span>5%</span></div>
-        <div class="matrix-item"><span>Eólica y Solar (Renovables)</span><span>7%</span></div>
-        <p style="margin-top: 15px;">**Emisiones $\text{CO}_2$ asociadas:** 60 Megatoneladas/año (Mt/año)</p>
-        </div>
+    <div class="container">
 
-    <h2>⚙️ Proyección 2050: Modifica la Matriz</h2>
-    <div class="simulator-control">
-        <p>Ajusta los porcentajes de las fuentes de energía para el año 2050. ¡El objetivo es **reducir las emisiones**!</p>
+        <!-- --- SECCIÓN PRINCIPAL: MATRIZ ENERGÉTICA (Actualizada con Botón de Mapa) --- -->
+        <section id="matriz" class="content-section active">
+            <h2>📊 Composición de la Oferta Interna de Energía Primaria</h2>
+            <p>La matriz energética de Argentina ilustra la distribución de las fuentes utilizadas para cubrir la demanda. Más del 80% proviene de fuentes fósiles, lo que marca un gran desafío para la transición energética.</p>
 
-        <label for="gas">Gas Natural (%): <span id="gas-val">55</span>%</label>
-        <input type="range" id="gas" min="0" max="60" value="55" oninput="updateMatrix()">
+            <div class="matriz-viz">
+                <h3>Distribución por Fuente (Datos Ilustrativos)</h3>
+                
+                <!-- GRÁFICO DE TORTA -->
+                <div class="pie-chart-container">
+                    <div id="pie-chart"></div>
+                </div>
 
-        <label for="eolica">Energía Eólica (%): <span id="eolica-val">5</span>%</label>
-        <input type="range" id="eolica" min="0" max="50" value="5" oninput="updateMatrix()">
+                <ul class="chart-legend">
+                    <li class="legend-item"><span class="legend-color gas-color"></span>Gas Natural (52.0%)</li>
+                    <li class="legend-item"><span class="legend-color oil-color"></span>Petróleo y Derivados (31.0%)</li>
+                    <li class="legend-item"><span class="legend-color hydro-color"></span>Hidroeléctrica (4.5%)</li>
+                    <li class="legend-item"><span class="legend-color nuclear-color"></span>Nuclear (2.5%)</li>
+                    <li class="legend-item"><span class="legend-color renewable-color"></span>Otras Renovables (8.0%)</li>
+                </ul>
+            </div>
 
-        <label for="solar">Energía Solar (%): <span id="solar-val">2</span>%</label>
-        <input type="range" id="solar" min="0" max="40" value="2" oninput="updateMatrix()">
+            <h2 style="margin-top: 40px;">🗺️ Geolocalización y Simuladores</h2>
+            <div class="nav-buttons">
+                <button class="map-button" onclick="showSection('mapa');">🌍 Mapa Interactivo de Centrales</button>
+            </div>
+            <div class="nav-buttons">
+                <button onclick="showSection('hidro');">💧 Hidroeléctrica</button>
+                <button onclick="showSection('nuclear');">⚛️ Nuclear</button>
+                <button onclick="showSection('fotovoltaica');">☀️ Fotovoltaica</button>
+                <button onclick="showSection('eolica');">🌬️ Eólica</button>
+                <button onclick="showSection('biocombustibles');">🌱 Biocombustibles</button>
+            </div>
+        </section>
 
-        <label for="hidro">Hidráulica y Nuclear (Fija): 23%</label>
-        <p style="margin-top: 15px;">**Suma Actual de Porcentajes (Renovables + Gas):** <span id="current-sum">62</span>%</p>
-        <small>El resto del porcentaje (hasta 100%) se completaría con otras fuentes como Petróleo, Biomasa, o mejoras en eficiencia.</small>
-    </div>
+        <!-- --- NUEVA SECCIÓN: MAPA INTERACTIVO --- -->
+        <section id="mapa" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>🗺️ Mapa Interactivo de Centrales Energéticas</h2>
+            <p>Explora la distribución simulada de las principales plantas de energía renovable y de generación base en Argentina.</p>
 
-    <h2>📈 Impactos de la Nueva Matriz</h2>
-    <div class="results">
-        <div class="result-item">🌍 **Emisiones $\text{CO}_2$ Proyectadas:** <span id="co2-impact">55</span> Mt/año</div>
-        <div class="result-item">💰 **Costo de Inversión (Infraestructura):** <span id="cost-impact">5.000</span> Millones USD</div>
-        <div class="result-item">🌱 **Porcentaje de Energía Renovable:** <span id="renovable-impact">7</span>%</div>
-    </div>
+            <div class="simulator-area" style="min-height: 600px; display: block; text-align: center;">
 
-    <h2>📚 Módulo Educativo: Eólica en Argentina</h2>
-    <div class="educational-module">
-        <p>La **Energía Eólica** aprovecha el viento, que es abundante en la **Patagonia** argentina. El principal desafío es la **intermitencia** (no siempre hay viento) y la necesidad de sistemas de transmisión de alta capacidad para llevar la energía desde el sur a los centros de consumo. 
+                <!-- Control de Explorar Mi Región -->
+                <div class="simulator-control" style="max-width: none;">
+                    <label for="region-selector">Modo “Explorar mi Región”: Selecciona tu Provincia</label>
+                    <select id="region-selector" onchange="showRegionInfo(this.value)" style="padding: 8px; border-radius: 4px; width: 100%;">
+                        <option value="">-- Seleccionar Provincia --</option>
+                        <option value="Mendoza">Mendoza (Solar/Hidro)</option>
+                        <option value="Chubut">Chubut (Eólica)</option>
+                        <option value="Buenos Aires">Buenos Aires (Nuclear/Biogás)</option>
+                        <option value="Santa Fe">Santa Fe (Biocombustibles)</option>
+                        <option value="Jujuy">Jujuy (Solar)</option>
+                    </select>
+                </div>
+                
+                <!-- SVG del Mapa de Argentina -->
+                <svg id="mapa-argentina" viewBox="0 0 450 1000" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="#a0c4ff"/> <!-- Fondo simulado de agua -->
+                    <!-- Simulación de la forma de Argentina (simplificada) -->
+                    <path d="M220,10 L200,20 L210,100 L200,150 L250,250 L220,350 L250,450 L200,550 L180,650 L150,700 L160,800 L180,850 L220,950 L250,990 L200,980 L150,950 L100,850 L120,750 L80,650 L100,550 L150,450 L100,350 L150,250 L100,150 L150,50 Z" 
+                          fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
 
-[Image of a wind farm in Patagonia]
-</p>
-        <p><strong>Término Clave:</strong> *Factor de Capacidad:* Es el rendimiento real de una planta respecto a su capacidad máxima (la eólica suele tener un factor más bajo que una central a gas).</p>
-    </div>
-</div>
+                    <!-- Puntos de Energía Simulados (Coords relativas al viewBox) -->
+                    <circle class="map-point solar-point" cx="120" cy="200" r="10" onclick="showPlantDetails('Solar Jujuy', 'Jujuy')">
+                        <title>Parque Solar Jujuy</title>
+                    </circle>
+                    <circle class="map-point hydro-point" cx="100" cy="300" r="10" onclick="showPlantDetails('Central Hidro. Mendoza', 'Mendoza')">
+                        <title>Central Hidroeléctrica Mendoza</title>
+                    </circle>
+                    <circle class="map-point wind-point" cx="150" cy="700" r="10" onclick="showPlantDetails('Parque Eólico Chubut', 'Chubut')">
+                        <title>Parque Eólico Chubut</title>
+                    </circle>
+                    <circle class="map-point bio-point" cx="250" cy="400" r="10" onclick="showPlantDetails('Planta Biogás BA', 'Buenos Aires')">
+                        <title>Planta de Biogás Buenos Aires</title>
+                    </circle>
+                    <circle class="map-point nuclear-point" cx="280" cy="500" r="10" fill="#27ae60" onclick="showPlantDetails('Central Nuclear BA', 'Buenos Aires')">
+                        <title>Central Nuclear</title>
+                    </circle>
+                    <circle class="map-point bio-point" cx="200" cy="450" r="10" onclick="showPlantDetails('Biocombustibles Santa Fe', 'Santa Fe')">
+                        <title>Planta de Biocombustibles Santa Fe</title>
+                    </circle>
 
-<script>
-    // --- Lógica JavaScript para el Simulador ---
-    function updateMatrix() {
-        // 1. Obtener valores de los deslizadores
-        const gasVal = parseInt(document.getElementById('gas').value);
-        const eolicaVal = parseInt(document.getElementById('eolica').value);
-        const solarVal = parseInt(document.getElementById('solar').value);
+                    <!-- Leyenda del Mapa -->
+                    <g transform="translate(300, 20)">
+                        <rect x="0" y="0" width="120" height="150" fill="white" stroke="#333" stroke-width="1" rx="5"/>
+                        <text x="5" y="15" font-size="12" font-weight="bold">Leyenda:</text>
+                        <circle cx="10" cy="35" r="5" class="solar-point"/>
+                        <text x="20" y="40" font-size="10">Solar</text>
+                        <circle cx="10" cy="60" r="5" class="wind-point"/>
+                        <text x="20" y="65" font-size="10">Eólica</text>
+                        <circle cx="10" cy="85" r="5" class="hydro-point"/>
+                        <text x="20" y="90" font-size="10">Hidroeléctrica</text>
+                        <circle cx="10" cy="110" r="5" class="bio-point"/>
+                        <text x="20" y="115" font-size="10">Biogás/Bio</text>
+                        <circle cx="10" cy="135" r="5" fill="#27ae60"/>
+                        <text x="20" y="140" font-size="10">Nuclear</text>
+                    </g>
+                </svg>
 
-        // 2. Actualizar texto de los deslizadores
-        document.getElementById('gas-val').textContent = gasVal;
-        document.getElementById('eolica-val').textContent = eolicaVal;
-        document.getElementById('solar-val').textContent = solarVal;
+                <!-- Modal de Información de la Planta -->
+                <div id="plant-info-modal" class="info-modal" style="display: none;">
+                    <h3 class="modal-title" id="modal-plant-name"></h3>
+                    <img id="modal-plant-image" class="modal-img" src="" onerror="this.src='https://placehold.co/400x150/cccccc/333333?text=Foto+Simulada'" alt="Imagen de la planta">
+                    <div class="modal-data">
+                        <p><strong>Tipo:</strong> <span id="modal-plant-type"></span></p>
+                        <p><strong>Provincia:</strong> <span id="modal-plant-province"></span></p>
+                        <p><strong>Producción Estimada:</strong> <span id="modal-plant-production"></span></p>
+                        <p><strong>Impacto Ambiental:</strong> <span id="modal-plant-impact"></span></p>
+                    </div>
+                </div>
 
-        // 3. Calcular la suma total (Gas + Eólica + Solar + Fijas)
-        // Usamos 23% fijo para Hidráulica y Nuclear para simplificar el ejemplo.
-        const fixed = 23; 
-        const currentSum = gasVal + eolicaVal + solarVal + fixed;
-        document.getElementById('current-sum').textContent = currentSum;
+                <!-- Información de la Región (Explorar Mi Región) -->
+                <div id="region-info-area" class="info-modal" style="display: none; background-color: #ffe0b2; border-color: #ff9800;">
+                    <h3 class="modal-title" style="color: #e65100; border-bottom: 2px solid #ff9800;">🔍 Información Regional para <span id="region-name"></span></h3>
+                    <div id="region-details" class="modal-data"></div>
+                </div>
+            </div>
+        </section>
 
-        // 4. Calcular el Impacto (Fórmulas Educativas Simplificadas)
+
+        <!-- --- SECCIONES DE SIMULADORES (Mantenidas del artefacto anterior) --- -->
         
-        // Emisiones CO2: Más renovables = Menos CO2 (y viceversa para Gas)
-        // Ejemplo simplificado: CO2 = 60 - (Eólica + Solar) * 0.8
-        const co2Impact = Math.max(30, 60 - (eolicaVal + solarVal - 7) * 0.8).toFixed(1); // Mínimo de 30 Mt/año
-        document.getElementById('co2-impact').textContent = co2Impact;
+        <!-- --- SECCIÓN HIDROELÉCTRICA --- -->
+        <section id="hidro" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>💧 Energía Hidroeléctrica</h2>
+            
+            <h3>Descripción Breve</h3>
+            <p><strong>Descripción:</strong> Utiliza la energía potencial gravitatoria del agua almacenada. La potencia generada es directamente proporcional al <strong>caudal</strong> y al <strong>salto o diferencia de altura (Head)</strong> entre el embalse y la turbina.</p>
 
-        // Costo de Inversión: Más renovables = Mayor costo de infraestructura inicial
-        // Ejemplo simplificado: Costo = 5000 + (Eólica + Solar - 7) * 250
-        const costImpact = (5000 + (eolicaVal + solarVal - 7) * 250).toFixed(0);
-        document.getElementById('cost-impact').textContent = costImpact.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Formato con puntos
-        
-        // Porcentaje de Energía Renovable: Suma de Eólica + Solar + Hidráulica (aunque Hidráulica no se modifica)
-        const renovableImpact = eolicaVal + solarVal + 18; // 18% es la Hidráulica del ejemplo
-        document.getElementById('renovable-impact').textContent = renovableImpact;
-    }
+            <h3>Simulador Interactivo: Nivel del Embalse</h3>
+            <div class="simulator-area" id="simulador-hidro">
+                <p>Mueve el deslizador para simular cómo un cambio en el nivel del embalse afecta el salto y, por lo tanto, la potencia.</p>
+                
+                <!-- VISUALIZACIÓN HIDROELÉCTRICA DETALLADA -->
+                <div class="hydro-viz-container">
+                    <div class="reservoir-side">
+                        <div id="water-level" style="height: 60%;"></div>
+                        <div id="water-head-line" style="top: 70px;"></div>
+                        <span class="text-label label-embalse">EMBALSE</span>
+                        <span id="dam-crest" style="top: 10px; color: #546e7a;">NIVEL MÁX.</span>
+                    </div>
+                    
+                    <div id="dam-structure"></div>
 
-    // Inicializar el impacto al cargar
-    updateMatrix();
-</script>
+                    <div class="powerhouse-side">
+                        <span class="text-label" style="top: 10px; left: 10px; color: #1a5c92;">SALA DE MÁQUINAS</span>
+                        <svg class="turbine-svg" id="turbine-viz" style="transform: rotate(0deg);" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="40" fill="#78909c"/>
+                            <path class="turbine-blade" d="M 50 10 C 65 25, 65 75, 50 90 L 50 80 C 60 70, 60 30, 50 20 Z" transform="rotate(0, 50, 50)"/>
+                            <path class="turbine-blade" d="M 50 10 C 65 25, 65 75, 50 90 L 50 80 C 60 70, 60 30, 50 20 Z" transform="rotate(120, 50, 50)"/>
+                            <path class="turbine-blade" d="M 50 10 C 65 25, 65 75, 50 90 L 50 80 C 60 70, 60 30, 50 20 Z" transform="rotate(240, 50, 50)"/>
+                            <circle cx="50" cy="50" r="10" fill="#37474f"/>
+                        </svg>
+                        <span class="text-label label-tailrace" style="bottom: 10px; right: 10px; background: #00bcd4; padding: 2px;">SALIDA DE AGUA</span>
+                    </div>
+
+                    <div id="water-flow-indicator" style="left: 55%; height: 30px; bottom: 50px;"></div>
+                    <span class="text-label" style="top: 35%; left: 65%; color: red; font-size: 1.1em; font-weight: bold;">SALTO (H)</span>
+                </div>
+                
+                <div class="simulator-control">
+                    <label for="embalse-level">Nivel del Embalse (Altura de Agua)</label>
+                    <input type="range" id="embalse-level" min="10" max="90" value="70" oninput="simulateHydro(this.value)">
+                    <p>Nivel Actual: <span id="current-level">70</span>% del máximo</p>
+                </div>
+                
+                <div class="simulator-output">
+                    Potencia Generada: <span id="hydro-output">0.00</span> MW
+                </div>
+            </div>
+        </section>
+
+        <!-- --- SECCIÓN NUCLEAR --- -->
+        <section id="nuclear" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>⚛️ Energía Nuclear</h2>
+            
+            <h3>Descripción Breve</h3>
+            <p><strong>Descripción:</strong> Se basa en la **fisión nuclear**, donde un neutrón impacta un núcleo atómico (generalmente Uranio-235), liberando energía y más neutrones que continúan la reacción en cadena. Las **barras de control** regulan esta reacción.</p>
+
+            <h3>Simulador Interactivo: Control de Reactor y Fisión</h3>
+            <div class="simulator-area" id="simulador-nuclear">
+                <p>Ajusta el nivel de las barras de control para simular la estabilidad de la reacción de fisión.</p>
+
+                <!-- VISUALIZACIÓN NUCLEAR DETALLADA CON FISIÓN -->
+                <div class="nuclear-viz-container">
+                    <div id="reactor-vessel">
+                        <span class="uranium-atom" id="uranium-1">U-235</span>
+                        <span class="uranium-atom" id="uranium-2">U-235</span>
+                        <div class="neutron" id="n1" style="left: 10%; top: 45%;"></div>
+                        <div class="neutron" id="n2" style="left: 70%; top: 40%;"></div>
+                        <div class="neutron" id="n3" style="left: 50%; top: 60%;"></div>
+                    </div>
+                    <div class="rod-container">
+                        <div class="rod" id="rod-1" style="height: 120px;"></div>
+                        <div class="rod" id="rod-2" style="height: 120px;"></div>
+                        <div class="rod" id="rod-3" style="height: 120px;"></div>
+                    </div>
+                    <div class="text-label" style="bottom: 5px; color: #37474f;">CONTENCIÓN Y MODERADOR</div>
+                </div>
+
+                <div class="simulator-control">
+                    <label for="control-rods">Posición de Barras de Control (%)</label>
+                    <input type="range" id="control-rods" min="10" max="90" value="50" oninput="simulateNuclear(this.value)">
+                    <p>Barras Retiradas: <span id="current-rods">50</span>%</p>
+                </div>
+                
+                <div class="simulator-output">
+                    Estabilidad del Reactor: <span id="nuclear-output">Estable</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- --- SECCIÓN FOTOVOLTAICA --- -->
+        <section id="fotovoltaica" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>☀️ Energía Fotovoltaica</h2>
+            
+            <h3>Descripción Breve</h3>
+            <p><strong>Descripción:</strong> La luz solar (fotones) impacta la célula fotovoltaica, liberando electrones (efecto fotoeléctrico) para generar corriente eléctrica. La eficiencia depende de la **intensidad solar**.</p>
+
+            <h3>Simulador Interactivo: Irradiación Solar</h3>
+            <div class="simulator-area" id="simulador-fotovoltaica">
+                <p>Simula la intensidad de la luz solar (fotones) que llegan al panel, afectando la producción eléctrica.</p>
+
+                <!-- VISUALIZACIÓN FOTOVOLTAICA DETALLADA -->
+                <div class="solar-viz-container">
+                    <div id="solar-rays"></div>
+                    <div class="photon" style="top: 10%; left: 20%;" id="p1"></div>
+                    <div class="photon" style="top: 5%; left: 50%;" id="p2"></div>
+                    <div class="photon" style="top: 15%; left: 80%;" id="p3"></div>
+                    
+                    <!-- Dibujo del Panel Fotovoltaico -->
+                    <div class="panel-layer layer-glass">CUBIERTA DE VIDRIO (Protección)</div>
+                    <div class="panel-layer layer-cell"></div>
+                    <div class="panel-layer layer-back">BACKSHEET (Aislamiento)</div>
+
+                    <div class="power-meter">⚡ Corriente: <span id="solar-meter">0.00</span> A</div>
+                </div>
+                
+                <div class="simulator-control">
+                    <label for="solar-intensity">Intensidad Solar (W/m²)</label>
+                    <input type="range" id="solar-intensity" min="0" max="1000" value="700" step="50" oninput="simulateSolar(this.value)">
+                    <p>Irradiación Actual: <span id="current-intensity">700</span> W/m²</p>
+                </div>
+                
+                <div class="simulator-output">
+                    Producción Eléctrica Estimada: <span id="solar-output">0.00</span> kWh
+                </div>
+            </div>
+        </section>
+
+        <!-- --- SECCIÓN EÓLICA --- -->
+        <section id="eolica" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>🌬️ Energía Eólica</h2>
+            
+            <h3>Descripción Breve</h3>
+            <p><strong>Descripción:</strong> Aprovecha la energía cinética del viento. Las palas capturan la energía, transfiriéndola a un generador. La potencia es proporcional al **cubo** de la velocidad del viento, por lo que una pequeña variación hace una gran diferencia.</p>
+
+            <h3>Simulador Interactivo: Velocidad del Viento</h3>
+            <div class="simulator-area" id="simulador-eolica">
+                <p>Ajusta la velocidad del viento para ver cómo cambia la potencia generada.</p>
+
+                <!-- VISUALIZACIÓN EÓLICA DETALLADA -->
+                <div class="eolic-viz-container">
+                    <div class="turbine-base"></div>
+                    <div class="turbine-nacelle"></div>
+                    <div class="turbine-hub"></div>
+                    <div id="turbine-blades">
+                        <div class="blade"></div>
+                        <div class="blade"></div>
+                        <div class="blade"></div>
+                    </div>
+                    <div id="wind-flow" style="animation: none;"></div>
+                    <span class="text-label" style="top: 10px; left: 0; color: #009688;">VIENTO</span>
+                    <span class="text-label" style="bottom: 10px; left: 105px; color: #546e7a;">TORRE</span>
+                </div>
+                
+                <div class="simulator-control">
+                    <label for="wind-speed">Velocidad del Viento (m/s)</label>
+                    <input type="range" id="wind-speed" min="0" max="25" value="12" oninput="simulateWind(this.value)">
+                    <p>Velocidad Actual: <span id="current-wind">12</span> m/s</p>
+                </div>
+                
+                <div class="simulator-output">
+                    Potencia Generada: <span id="wind-output">0.00</span> kW
+                </div>
+            </div>
+        </section>
+
+        <!-- --- SECCIÓN BIOCOMBUSTIBLES --- -->
+        <section id="biocombustibles" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>🌱 Biocombustibles</h2>
+            
+            <h3>Descripción Breve</h3>
+            <p><strong>Descripción:</strong> Combustibles líquidos derivados de biomasa (ej. biodiésel de aceite de soja). Se usan para mezcla obligatoria (corte) con combustibles fósiles. El impacto ambiental es menor porque el CO₂ emitido por la quema es parcialmente compensado por el CO₂ absorbido por las plantas.</p>
+
+            <h3>Simulador Interactivo: Porcentaje de Mezcla (Blend)</h3>
+            <div class="simulator-area" id="simulador-biocombustibles">
+                <p>Simula el porcentaje de biocombustible mezclado (Blend) con el combustible fósil tradicional (diésel/nafta).</p>
+
+                <!-- VISUALIZACIÓN BIOCOMBUSTIBLES DETALLADA -->
+                <div class="bio-viz-container">
+                    <div>
+                        <div class="plant-icon">🌿</div>
+                        <div class="tank-label">BIOMASA (Soja/Maíz)</div>
+                    </div>
+                    <div style="font-size: 2em; line-height: 150px;">➡️</div>
+                    <div class="process-tank fuel-mix-tank">
+                        <div id="fossil-fuel" style="height: 80%;">
+                            <span class="label-fossil">FÓSIL</span>
+                        </div>
+                        <div id="bio-fuel" style="height: 20%;">
+                            <span class="label-bio">BIO</span>
+                        </div>
+                        <div class="tank-label">TANQUE DE MEZCLA</div>
+                    </div>
+                    <div style="font-size: 2em; line-height: 150px;">➡️</div>
+                    <div>
+                        <div class="plant-icon">⛽</div>
+                        <div class="tank-label">COMBUSTIBLE FINAL (B10/E12)</div>
+                    </div>
+                </div>
+
+                <div class="simulator-control">
+                    <label for="blend-percent">Porcentaje de Biodiésel (B%)</label>
+                    <input type="range" id="blend-percent" min="5" max="20" value="10" step="1" oninput="simulateBio(this.value)">
+                    <p>Mezcla Actual: <span id="current-blend">10</span>%</p>
+                </div>
+                
+                <div class="simulator-output">
+                    Reducción Estimada de CO₂: <span id="bio-output">0.00</span> kg/L
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Script para la Navegación, Matriz de Datos y Simulaciones -->
+    <script>
+        // --- 1. DATOS DE LA MATRIZ (INICIO) ---
+        // Los porcentajes deben sumar 100%
+        const matrizData = [
+            { name: "Gas Natural", percentage: 52.0, class: "gas" },
+            { name: "Petróleo y Derivados", percentage: 31.0, class: "oil" },
+            { name: "Hidroeléctrica", percentage: 4.5, class: "hydro" },
+            { name: "Nuclear", percentage: 2.5, class: "nuclear" },
+            { name: "Otras Renovables", percentage: 8.0, class: "renewable" },
+            { name: "Carbón y Otros", percentage: 2.0, class: "oil" }
+        ];
+
+        // Datos simulados para el mapa
+        const plantData = {
+            'Solar Jujuy': {
+                type: 'Fotovoltaica',
+                province: 'Jujuy',
+                production: '300 MW (Estimado)',
+                impact: 'Bajo (Emisiones cero)',
+                img: 'https://placehold.co/400x150/f8c37e/333333?text=Solar+en+la+Puna',
+                details: 'Gran planta de energía solar en el noroeste, aprovechando la alta radiación. Su construcción impacta el ecosistema de altura, pero genera energía limpia.'
+            },
+            'Central Hidro. Mendoza': {
+                type: 'Hidroeléctrica',
+                province: 'Mendoza',
+                production: '650 MW (Estimado)',
+                impact: 'Medio (Alteración de caudales y ecosistema fluvial)',
+                img: 'https://placehold.co/400x150/81d4fa/333333?text=Embalse+Mendoza',
+                details: 'Central de media potencia que asegura base de energía y regula el riego agrícola de la provincia.'
+            },
+            'Parque Eólico Chubut': {
+                type: 'Eólica',
+                province: 'Chubut',
+                production: '120 MW (Estimado)',
+                impact: 'Bajo (Posible impacto en aves, ruido)',
+                img: 'https://placehold.co/400x150/b0bec5/333333?text=Turbinas+Eólicas',
+                details: 'Ubicado en la Patagonia, una de las zonas con mayor recurso eólico del país. Es fundamental para diversificar la matriz.'
+            },
+            'Planta Biogás BA': {
+                type: 'Biogás',
+                province: 'Buenos Aires',
+                production: '5 MW (Estimado)',
+                impact: 'Muy Bajo (Aprovecha residuos orgánicos)',
+                img: 'https://placehold.co/400x150/c5e1a5/333333?text=Digestor+de+Biogás',
+                details: 'Planta pequeña que genera electricidad a partir de desechos de feedlots. Contribuye a la gestión de residuos.'
+            },
+            'Central Nuclear BA': {
+                type: 'Nuclear',
+                province: 'Buenos Aires',
+                production: '750 MW (Estimado)',
+                impact: 'Alto/Controlado (Gestión de residuos radioactivos)',
+                img: 'https://placehold.co/400x150/66bb6a/333333?text=Reactor+Nuclear',
+                details: 'Fuente de energía base estable, con desafíos en el manejo seguro de combustible gastado. Es clave para el suministro continuo.'
+            },
+            'Biocombustibles Santa Fe': {
+                type: 'Biocombustibles',
+                province: 'Santa Fe',
+                production: '200 Toneladas/día',
+                impact: 'Medio (Uso de suelo agrícola)',
+                img: 'https://placehold.co/400x150/d7ccc8/333333?text=Planta+de+Biodiésel',
+                details: 'Ubicada cerca de zonas productoras de soja. Su producción se destina al corte obligatorio con diésel fósil.'
+            }
+        };
+
+        // --- 2. FUNCIÓN DE NAVEGACIÓN ---
+        function showSection(sectionId) {
+            var sections = document.querySelectorAll('.content-section');
+            sections.forEach(function(section) {
+                section.classList.remove('active');
+            });
+            var activeSection = document.getElementById(sectionId);
+            if (activeSection) {
+                activeSection.classList.add('active');
+            }
+            // Ocultar info de planta y región al cambiar de sección
+            document.getElementById('plant-info-modal').style.display = 'none';
+            document.getElementById('region-info-area').style.display = 'none';
+            document.getElementById('region-selector').value = ''; 
+        }
+
+        // --- 3. FUNCIONES DEL MAPA ---
+
+        // Muestra detalles de la planta al hacer click en el punto
+        function showPlantDetails(plantName, province) {
+            const data = plantData[plantName];
+            const modal = document.getElementById('plant-info-modal');
+            const regionArea = document.getElementById('region-info-area');
+
+            // Ocultar info regional y restablecer selector
+            regionArea.style.display = 'none';
+            document.getElementById('region-selector').value = '';
+
+            if (data) {
+                document.getElementById('modal-plant-name').textContent = plantName;
+                document.getElementById('modal-plant-type').textContent = data.type;
+                document.getElementById('modal-plant-province').textContent = data.province;
+                document.getElementById('modal-plant-production').textContent = data.production;
+                document.getElementById('modal-plant-impact').textContent = data.impact;
+                document.getElementById('modal-plant-image').src = data.img;
+                
+                modal.style.display = 'block';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Muestra información de la región seleccionada
+        function showRegionInfo(province) {
+            const regionArea = document.getElementById('region-info-area');
+            const regionName = document.getElementById('region-name');
+            const regionDetails = document.getElementById('region-details');
+            const plantModal = document.getElementById('plant-info-modal');
+            
+            // Ocultar info de planta
+            plantModal.style.display = 'none';
+
+            if (province === "") {
+                regionArea.style.display = 'none';
+                return;
+            }
+
+            regionName.textContent = province;
+            regionDetails.innerHTML = '';
+            
+            // Simulación de datos regionales basados en el tipo de recurso predominante
+            const regionalData = {
+                'Mendoza': '<strong>Recurso Principal:</strong> Hidráulico y Solar. <strong>Desafío:</strong> Gestión hídrica y estacionalidad. <strong>Oportunidad:</strong> Alto potencial solar en precordillera.',
+                'Chubut': '<strong>Recurso Principal:</strong> Eólico. <strong>Desafío:</strong> Conexión a la red nacional. <strong>Oportunidad:</strong> Velocidad de viento constante y excepcional.',
+                'Buenos Aires': '<strong>Recurso Principal:</strong> Nuclear y Biogás. <strong>Desafío:</strong> Alta demanda de la metrópolis. <strong>Oportunidad:</strong> Uso de residuos urbanos y ganaderos para biogás.',
+                'Santa Fe': '<strong>Recurso Principal:</strong> Biocombustibles. <strong>Desafío:</strong> Monocultivo de soja. <strong>Oportunidad:</strong> Integración de la producción agrícola a la energía.',
+                'Jujuy': '<strong>Recurso Principal:</strong> Solar. <strong>Desafío:</strong> Distancia a centros de consumo. <strong>Oportunidad:</strong> Mayor radiación solar del país.'
+            };
+
+            regionDetails.innerHTML = regionalData[province];
+            regionArea.style.display = 'block';
+        }
+
+
+        // --- 4. FUNCIONES DE SIMULACIÓN (Mantenidas) ---
+
+        // SIMULADOR HIDROELÉCTRICA
+        function simulateHydro(level) {
+            const outputElement = document.getElementById('hydro-output');
+            const levelDisplay = document.getElementById('current-level');
+            const waterViz = document.getElementById('water-level');
+            const flowViz = document.getElementById('water-flow-indicator');
+            const headLineViz = document.getElementById('water-head-line');
+            const turbineViz = document.getElementById('turbine-viz');
+            
+            const basePower = 500; 
+            const maxLevel = 90;
+            const minLevel = 10;
+            const effectiveHead = level - minLevel; 
+            let power = 0;
+            
+            if (effectiveHead > 0) {
+                power = basePower * Math.pow(effectiveHead / (maxLevel - minLevel), 2);
+            }
+            
+            levelDisplay.textContent = level;
+            outputElement.textContent = power.toFixed(2);
+
+            waterViz.style.height = `${level}%`;
+            
+            const headLinePos = 250 * ((100 - level) / 100) + 10; 
+            headLineViz.style.top = `${250 * ((100 - level) / 100) * 0.9}px`;
+            
+            if (power > 50) {
+                flowViz.style.opacity = 1;
+                const rotationSpeed = 1 / (power / 500); 
+                turbineViz.style.animation = `spin ${rotationSpeed}s linear infinite`;
+            } else {
+                flowViz.style.opacity = 0;
+                turbineViz.style.animation = 'none';
+            }
+        }
+
+        // SIMULADOR NUCLEAR
+        let fissionInterval;
+        function simulateNuclear(rods) {
+            const outputElement = document.getElementById('nuclear-output');
+            const rodsDisplay = document.getElementById('current-rods');
+            const rodElements = [
+                document.getElementById('rod-1'), 
+                document.getElementById('rod-2'), 
+                document.getElementById('rod-3')
+            ];
+            const coreViz = document.getElementById('reactor-vessel');
+            
+            rodsDisplay.textContent = rods; 
+            
+            let status;
+            let color;
+            
+            const insertionLevel = 100 - rods; 
+            const rodHeight = 120 * (insertionLevel / 100); 
+            
+            rodElements.forEach(rod => {
+                rod.style.transform = `translateY(${120 - rodHeight}px)`; 
+                rod.style.height = `${rodHeight}px`; 
+            });
+            
+            if (rods < 30) {
+                status = "Crítica (Reacción Acelerada)";
+                color = "red";
+                coreViz.style.boxShadow = `0 0 20px 5px rgba(255, 0, 0, 0.7)`;
+                startFissionAnimation(0.5); 
+            } else if (rods >= 30 && rods <= 70) {
+                status = "Estable (Generación Óptima)";
+                color = "green";
+                coreViz.style.boxShadow = `0 0 15px 3px rgba(0, 255, 0, 0.5)`;
+                startFissionAnimation(2.0); 
+            } else {
+                status = "Subcrítica (Reacción Lenta)";
+                color = "orange";
+                coreViz.style.boxShadow = `0 0 10px 1px rgba(255, 165, 0, 0.5)`;
+                stopFissionAnimation();
+            }
+            
+            outputElement.textContent = status;
+            outputElement.style.color = color;
+        }
+
+        function startFissionAnimation(speed) {
+            stopFissionAnimation();
+            const uraniumAtoms = [document.getElementById('uranium-1'), document.getElementById('uranium-2')];
+            const neutrons = [document.getElementById('n1'), document.getElementById('n2'), document.getElementById('n3')];
+
+            fissionInterval = setInterval(() => {
+                const atom = uraniumAtoms[Math.floor(Math.random() * uraniumAtoms.length)];
+                atom.style.animation = `fission ${speed}s ease-in-out`;
+                setTimeout(() => atom.style.animation = 'none', speed * 1000);
+
+                neutrons.forEach(n => {
+                    n.style.animation = `neutronPath ${speed * 2}s linear`;
+                    n.style.opacity = 1;
+                    setTimeout(() => {
+                        n.style.animation = 'none';
+                        n.style.opacity = 0;
+                        n.style.transform = `translate(${Math.random() * 50 - 25}px, ${Math.random() * 50 - 25}px)`; 
+                    }, speed * 2000);
+                });
+                
+            }, speed * 3000);
+        }
+
+        function stopFissionAnimation() {
+            clearInterval(fissionInterval);
+            const uraniumAtoms = [document.getElementById('uranium-1'), document.getElementById('uranium-2')];
+            const neutrons = [document.getElementById('n1'), document.getElementById('n2'), document.getElementById('n3')];
+            uraniumAtoms.forEach(a => a.style.animation = 'none');
+            neutrons.forEach(n => {
+                n.style.animation = 'none';
+                n.style.opacity = 0;
+            });
+        }
+
+
+        // SIMULADOR FOTOVOLTAICA
+        function simulateSolar(intensity) {
+            const outputElement = document.getElementById('solar-output');
+            const intensityDisplay = document.getElementById('current-intensity');
+            const raysViz = document.getElementById('solar-rays');
+            const meterViz = document.getElementById('solar-meter');
+            const photonElements = [document.getElementById('p1'), document.getElementById('p2'), document.getElementById('p3')];
+            
+            const panelArea = 10; 
+            const efficiency = 0.18; 
+            const power = (intensity / 1000) * panelArea * efficiency * 0.85; 
+            
+            intensityDisplay.textContent = intensity;
+            outputElement.textContent = power.toFixed(2);
+            meterViz.textContent = (power * 5).toFixed(2); 
+
+            raysViz.style.opacity = 0.2 + (intensity / 1000) * 0.8;
+            raysViz.style.filter = `brightness(${1 + intensity / 1000 * 0.5})`;
+            
+            const photonSpeed = 1000 / intensity;
+            photonElements.forEach((p, index) => {
+                if (intensity > 100) {
+                    p.style.animation = `photonHit ${photonSpeed}s linear infinite`;
+                    p.style.animationDelay = `${index * 0.3}s`;
+                    p.style.opacity = 1;
+                } else {
+                    p.style.animation = 'none';
+                    p.style.opacity = 0;
+                }
+            });
+        }
+
+        // SIMULADOR EÓLICA
+        function simulateWind(speed) {
+            const outputElement = document.getElementById('wind-output');
+            const windDisplay = document.getElementById('current-wind');
+            const bladesViz = document.getElementById('turbine-blades');
+            const flowViz = document.getElementById('wind-flow');
+            
+            let power = 0;
+            const cutInSpeed = 3; 
+            const ratedSpeed = 15; 
+            const cutOutSpeed = 25; 
+            const maxPower = 3000; 
+
+            if (speed >= cutInSpeed && speed < ratedSpeed) {
+                power = maxPower * Math.pow((speed - cutInSpeed) / (ratedSpeed - cutInSpeed), 3);
+            } else if (speed >= ratedSpeed && speed < cutOutSpeed) {
+                power = maxPower;
+            } else if (speed >= cutOutSpeed) {
+                power = 0; 
+            }
+            
+            windDisplay.textContent = speed;
+            outputElement.textContent = power.toFixed(2);
+            
+            if (power > 0) {
+                const rotationSpeed = 1 / (speed / 10); 
+                bladesViz.style.animation = `spin ${rotationSpeed}s linear infinite`;
+                flowViz.style.opacity = 1;
+                flowViz.style.animation = `windAnimate ${15 / speed}s linear infinite`;
+            } else {
+                bladesViz.style.animation = 'none';
+                flowViz.style.opacity = 0;
+                flowViz.style.animation = 'none';
+            }
+        }
+
+        // SIMULADOR BIOCOMBUSTIBLES
+        function simulateBio(blend) {
+            const outputElement = document.getElementById('bio-output');
+            const blendDisplay = document.getElementById('current-blend');
+            const bioFuelViz = document.getElementById('bio-fuel');
+            const fossilFuelViz = document.getElementById('fossil-fuel');
+            
+            const baseFossilCO2 = 2.6; 
+            const bioReductionFactor = 0.9; 
+            
+            const co2Saved = (blend / 100) * baseFossilCO2 * bioReductionFactor;
+            
+            blendDisplay.textContent = blend;
+            outputElement.textContent = co2Saved.toFixed(3);
+
+            const bioHeight = blend; 
+            const fossilHeight = 100 - blend; 
+
+            bioFuelViz.style.height = `${bioHeight}%`;
+            fossilFuelViz.style.height = `${fossilHeight}%`;
+
+            const labelBio = bioFuelViz.querySelector('.label-bio');
+            const labelFossil = fossilFuelViz.querySelector('.label-fossil');
+
+            // Asegura que las etiquetas estén dentro del líquido
+            labelBio.style.top = (100 - bioHeight + 5) < 5 ? '5px' : `${100 - bioHeight + 5}%`;
+            labelFossil.style.bottom = (100 - fossilHeight + 5) < 5 ? '5px' : `${100 - fossilHeight + 5}%`;
+        }
+
+
+        // 5. INICIAR LA APLICACIÓN Y SIMULACIONES
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar las simulaciones al cargar la página
+            simulateHydro(document.getElementById('embalse-level').value);
+            simulateNuclear(document.getElementById('control-rods').value);
+            simulateSolar(document.getElementById('solar-intensity').value);
+            simulateWind(document.getElementById('wind-speed').value);
+            simulateBio(document.getElementById('blend-percent').value);
+        });
+    </script>
 
 </body>
 </html>
