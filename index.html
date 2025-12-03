@@ -30,8 +30,7 @@
         .back-button { background-color: #6c757d !important; margin-bottom: 20px; }
         .map-button { background-color: #28a745 !important; }
         .map-button:hover { background-color: #1e7e34 !important; }
-
-
+        
         /* Controles de Simulador */
         .simulator-area { 
             background-color: #e9f5ff; padding: 25px; margin-top: 20px; border: 2px dashed #007bff; 
@@ -78,20 +77,22 @@
         .hydro-color { background-color: #2980b9; } .nuclear-color { background-color: #27ae60; } 
         .renewable-color { background-color: #f1c40f; }
 
-        /* --- ESTILOS ESPECÍFICOS DEL MAPA --- */
+        /* --- ESTILOS ESPECÍFICOS DEL MAPA (AJUSTADOS) --- */
         #mapa-argentina {
-            /* Aumentamos el ancho ligeramente para mejor visualización */
             width: 90%; max-width: 450px; 
-            height: 850px; /* Ajustamos la altura para la proporción del mapa */
+            height: 850px; 
             border: 1px solid #ccc; border-radius: 8px;
             margin: 20px auto;
             position: relative; 
-            /* *** CAMBIO CRÍTICO: Usamos un URL de placeholder para garantizar que la imagen cargue *** */
-            background-image: url('https://placehold.co/450x850/003366/ffffff?text=Mapa+Político+de+Argentina'); 
-            background-size: cover; /* Ajustamos para cubrir el área sin distorsionar demasiado */
-            background-repeat: no-repeat;
-            background-position: center top;
             box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Imagen de fondo explícita para asegurar la carga */
+        #argentina-map-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Asegura que la imagen cubra el contenedor */
+            border-radius: 8px;
         }
         
         /* SVG Overlay para los Puntos */
@@ -201,6 +202,7 @@
                 <button class="map-button" onclick="showSection('mapa');">🌍 Mapa Interactivo de Centrales</button>
             </div>
             <div class="nav-buttons">
+                <button onclick="showSection('jugar');">🎮 Simuladores para Aprender Jugando</button> <!-- NUEVO BOTÓN -->
                 <button onclick="showSection('hidro');">💧 Hidroeléctrica</button>
                 <button onclick="showSection('nuclear');">⚛️ Nuclear</button>
                 <button onclick="showSection('fotovoltaica');">☀️ Fotovoltaica</button>
@@ -209,7 +211,7 @@
             </div>
         </section>
 
-        <!-- --- SECCIÓN: MAPA INTERACTIVO (CORREGIDO CON URL PÚBLICA) --- -->
+        <!-- --- SECCIÓN: MAPA INTERACTIVO (CORREGIDO CON ETIQUETA IMG) --- -->
         <section id="mapa" class="content-section">
             <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
             <h2>🗺️ Mapa Interactivo de Centrales Energéticas</h2>
@@ -232,7 +234,10 @@
                 
                 <!-- Contenedor del Mapa con Imagen de Fondo y SVG Overlay -->
                 <div id="mapa-argentina" >
-                    <!-- El SVG se usa como una capa de superposición (overlay) con viewBox ajustado a las nuevas dimensiones) -->
+                    <!-- IMAGEN DE FONDO EXPLÍCITA PARA MAYOR COMPATIBILIDAD -->
+                    <img id="argentina-map-img" src="https://placehold.co/450x850/003366/ffffff?text=Mapa+Político+de+Argentina" alt="Mapa Político de Argentina" />
+
+                    <!-- El SVG se usa como una capa de superposición (overlay) con viewBox ajustado a las dimensiones de la imagen -->
                     <svg id="map-overlay-svg" viewBox="0 0 450 850" xmlns="http://www.w3.org/2000/svg">
                         
                         <!-- Puntos de Energía Simulados (Coordenadas ajustadas al nuevo mapa de 450x850) -->
@@ -304,7 +309,103 @@
         </section>
 
 
-        <!-- --- SECCIONES DE SIMULADORES (Mantenidas) --- -->
+        <!-- --- NUEVA SECCIÓN: SIMULADORES PARA JUGAR --- -->
+        <section id="jugar" class="content-section">
+            <button class="back-button" onclick="showSection('matriz');">⬅️ Volver a la Matriz</button>
+            <h2>🎮 Simuladores para Aprender Jugando</h2>
+            <p>Aquí puedes experimentar con los principios clave de la generación y el ahorro de energía mediante escenarios interactivos.</p>
+
+            <div class="simulator-area" style="min-height: 400px; align-items: stretch; gap: 20px;">
+                
+                <!-- 1. Simulador Solar -->
+                <div class="simulator-control" style="max-width: 100%; background-color: #fff9c4; border-color: #fdd835;">
+                    <h3 style="font-size: 1.5em; color: #f9a825; margin-bottom: 10px;">☀️ 1. Simulador Solar</h3>
+                    <p>Ajusta las variables para maximizar la producción de tu panel:</p>
+                    <div style="margin-top: 10px;">
+                        <label for="solar-angle">Ángulo del Panel (0°-90°): <span id="solar-angle-val">45</span>°</label>
+                        <input type="range" id="solar-angle" min="0" max="90" value="45" oninput="document.getElementById('solar-angle-val').textContent=this.value;">
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label for="solar-location">Ubicación (Latitud):</label>
+                        <select id="solar-location" style="width: 100%; padding: 5px; border-radius: 4px;">
+                            <option value="40">Norte (Jujuy, Salta) - Alto Sol</option>
+                            <option value="20">Centro (CBA, SL) - Sol Medio</option>
+                            <option value="0">Sur (Chubut, Santa Cruz) - Sol Bajo</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label for="solar-weather">Clima:</label>
+                        <select id="solar-weather" style="width: 100%; padding: 5px; border-radius: 4px;">
+                            <option value="1">Soleado</option>
+                            <option value="0.6">Parcialmente Nublado</option>
+                            <option value="0.2">Nublado</option>
+                        </select>
+                    </div>
+                    <button style="background-color: #f9a825; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; width: 100%; font-weight: bold;" onclick="simulatePlaySolar()">Calcular Producción</button>
+                    <div class="simulator-output" id="play-solar-output" style="background-color: #ffecb3;">Producción Estimada: 0.00 kWh</div>
+                </div>
+
+                <!-- 2. Simulador Eólico -->
+                <div class="simulator-control" style="max-width: 100%; background-color: #bbdefb; border-color: #42a5f5;">
+                    <h3 style="font-size: 1.5em; color: #1e88e5; margin-bottom: 10px;">🌬️ 2. Simulador Eólico</h3>
+                    <p>Evalúa cómo el diseño y el viento afectan la potencia (recuerda: $P \propto v^3$):</p>
+                    <div style="margin-top: 10px;">
+                        <label for="wind-height">Altura de la Torre (metros): <span id="wind-height-val">50</span>m</label>
+                        <input type="range" id="wind-height" min="20" max="100" value="50" oninput="document.getElementById('wind-height-val').textContent=this.value;">
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label for="wind-type">Tipo de Molino:</label>
+                        <select id="wind-type" style="width: 100%; padding: 5px; border-radius: 4px;">
+                            <option value="1">Alta Potencia (Eje Horizontal)</option>
+                            <option value="0.5">Baja Potencia (Eje Vertical)</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label for="wind-speed-play">Velocidad del Viento (m/s): <span id="wind-speed-val-play">10</span> m/s</label>
+                        <input type="range" id="wind-speed-play" min="0" max="25" value="10" oninput="document.getElementById('wind-speed-val-play').textContent=this.value;">
+                    </div>
+                    <button style="background-color: #1e88e5; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; width: 100%; font-weight: bold;" onclick="simulatePlayWind()">Calcular Potencia</button>
+                    <div class="simulator-output" id="play-wind-output" style="background-color: #e3f2fd;">Potencia Estimada: 0.00 kW</div>
+                </div>
+
+                <!-- 3. Simulador Mi Casa Sostenible -->
+                <div class="simulator-control" style="max-width: 100%; background-color: #c8e6c9; border-color: #66bb6a;">
+                    <h3 style="font-size: 1.5em; color: #388e3c; margin-bottom: 10px;">🏡 3. Mi Casa Sostenible</h3>
+                    <p>Balancea la generación vs. el consumo para un hogar:</p>
+                    
+                    <h4 style="font-weight: bold; margin-top: 15px; border-bottom: 1px dashed #66bb6a;">Generación Estimada (kWh/mes)</h4>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <label>Paneles Solares:</label>
+                        <input type="number" id="gen-solar" value="250" style="width: 80px; padding: 3px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+
+                    <h4 style="font-weight: bold; margin-top: 15px; border-bottom: 1px dashed #66bb6a;">Consumo (kWh/mes)</h4>
+                    <div style="margin-top: 5px;">
+                        <label>Eficiencia Energética (Aislamiento, LEDs):</label>
+                        <select id="con-efficiency" style="width: 100%; padding: 5px; border-radius: 4px;">
+                            <option value="1">Baja (Consumo Base: 400)</option>
+                            <option value="0.8">Media (Consumo Base: 320)</option>
+                            <option value="0.6">Alta (Consumo Base: 240)</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label for="con-habits">Hábitos de Ahorro (Apagar luces, etc.):</label>
+                        <select id="con-habits" style="width: 100%; padding: 5px; border-radius: 4px;">
+                            <option value="1">Malo (Consumo Extra: +100)</option>
+                            <option value="0.5">Normal (Consumo Extra: +50)</option>
+                            <option value="0">Excelente (Consumo Extra: +0)</option>
+                        </select>
+                    </div>
+
+                    <button style="background-color: #388e3c; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; width: 100%; font-weight: bold;" onclick="simulatePlayHome()">Calcular Balance</button>
+                    <div class="simulator-output" id="play-home-output" style="background-color: #e8f5e9;">Balance: 0.00 kWh (Neutral)</div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- --- SECCIONES DE SIMULADORES ORIGINALES (Mantenidas) --- -->
         
         <!-- --- SECCIÓN HIDROELÉCTRICA --- -->
         <section id="hidro" class="content-section">
@@ -666,7 +767,67 @@
         }
 
 
-        // --- 4. FUNCIONES DE SIMULACIÓN (Mantenidas) ---
+        // --- 4. FUNCIONES DE SIMULACIÓN AVANZADA (JUGANDO) ---
+
+        function simulatePlaySolar() {
+            const angle = parseFloat(document.getElementById('solar-angle').value);
+            const locationFactor = parseFloat(document.getElementById('solar-location').value) / 100 + 1; // 1.4 a 1.0
+            const weatherFactor = parseFloat(document.getElementById('solar-weather').value);
+            
+            // Simulación: Producción base (1000W) * seno(ángulo óptimo) * ubicación * clima
+            // El ángulo óptimo se simula como 45 grados.
+            const angleEfficiency = Math.sin((90 - Math.abs(angle - 45)) * Math.PI / 180); 
+            
+            const maxProduction = 1000 * 5; // 5 kWh de base
+            let production = maxProduction * angleEfficiency * locationFactor * weatherFactor / 2;
+
+            production = Math.max(0, Math.min(production, maxProduction)); // Limitar el rango
+            
+            const output = document.getElementById('play-solar-output');
+            output.innerHTML = `Producción Estimada: <strong>${production.toFixed(2)} kWh/día</strong>`;
+            output.style.backgroundColor = production > 2000 ? '#a5d6a7' : (production > 1000 ? '#ffecb3' : '#ffcdd2');
+        }
+
+        function simulatePlayWind() {
+            const height = parseFloat(document.getElementById('wind-height').value);
+            const typeFactor = parseFloat(document.getElementById('wind-type').value);
+            const speed = parseFloat(document.getElementById('wind-speed-play').value);
+            
+            // La potencia es proporcional a (Velocidad ^ 3) y al área (simulada por Altura)
+            const power = typeFactor * (height / 100) * Math.pow(speed, 3) * 0.05; 
+            
+            const output = document.getElementById('play-wind-output');
+            output.innerHTML = `Potencia Estimada: <strong>${power.toFixed(2)} kW</strong>`;
+            output.style.backgroundColor = power > 300 ? '#b3e5fc' : (power > 100 ? '#e3f2fd' : '#fff8e1');
+        }
+
+        function simulatePlayHome() {
+            const genSolar = parseFloat(document.getElementById('gen-solar').value);
+            const conEfficiency = parseFloat(document.getElementById('con-efficiency').value);
+            const conHabitsFactor = parseFloat(document.getElementById('con-habits').value);
+
+            const baseConsumption = 400; // kWh/mes
+            const consumption = (baseConsumption * conEfficiency) + (conHabitsFactor * 100);
+            
+            const balance = genSolar - consumption;
+            
+            const output = document.getElementById('play-home-output');
+            output.textContent = '';
+            
+            if (balance > 50) {
+                output.innerHTML = `Balance: <strong>${balance.toFixed(0)} kWh</strong> (Superávit: ¡Vendes energía!)`;
+                output.style.backgroundColor = '#a5d6a7';
+            } else if (balance >= -50 && balance <= 50) {
+                output.innerHTML = `Balance: <strong>${balance.toFixed(0)} kWh</strong> (Neutral: Casi autosuficiente)`;
+                output.style.backgroundColor = '#ffecb3';
+            } else {
+                output.innerHTML = `Balance: <strong>${balance.toFixed(0)} kWh</strong> (Déficit: Necesitas más generación/ahorro)`;
+                output.style.backgroundColor = '#ffcdd2';
+            }
+        }
+
+
+        // --- 5. FUNCIONES DE SIMULACIÓN (Originales) ---
 
         // SIMULADOR HIDROELÉCTRICA
         function simulateHydro(level) {
@@ -884,7 +1045,7 @@
         }
 
 
-        // 5. INICIAR LA APLICACIÓN Y SIMULACIONES
+        // 6. INICIAR LA APLICACIÓN Y SIMULACIONES
         document.addEventListener('DOMContentLoaded', () => {
             // Inicializar las simulaciones al cargar la página
             simulateHydro(document.getElementById('embalse-level').value);
@@ -892,6 +1053,11 @@
             simulateSolar(document.getElementById('solar-intensity').value);
             simulateWind(document.getElementById('wind-speed').value);
             simulateBio(document.getElementById('blend-percent').value);
+            
+            // Inicializar simuladores de juego
+            simulatePlaySolar();
+            simulatePlayWind();
+            simulatePlayHome();
         });
     </script>
 
